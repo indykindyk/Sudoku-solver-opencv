@@ -24,7 +24,6 @@ def split_photo(img):
         pass
 
 def clean_box(img):
-	print(img.shape)
 	img = img[10:90, 10:90]
 	(w, h) = img.shape
 	box_contours = im.find_contours(img)
@@ -55,19 +54,21 @@ def load_image(img):
 # load an image and predict the class
 def predict(boxes):
 	# load model
-	model = load_model('/home/karol/python_projekty/cv2/sudoku/models/save_at_11.h5')
-	x = 1
+	model = load_model('/home/karol/python_projekty/cv2/sudoku/models/save_at_10.h5')
+	index_of_num = 1
 	#give prediction for evry square
 	for img in boxes:
+		print(img.shape)
 		# load the imagev
 		#img = load_image(img)
 		# predict the class
+		img.reshape(1, 128, 128, 3)
 		predict = model.predict(img)
 		digit = argmax(predict)
 		#get the probability value
 		probability_value = amax(predict)
 		print(f"[{x}] pred: {digit}, conf: {round(probability_value*100, 2)} %")
-		x+=1
+		index_of_num+=1
 		# if 
 		if probability_value*100 < 45 :
 			predictions.append(0)
