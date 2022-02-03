@@ -7,11 +7,11 @@ import tensorflow as tf
 #vid = cv.VideoCapture(0)
 
 def mainloop():
-        model = load_model('/home/karol/python_projekty/cv2/sudoku/models/save_at_10.h5')
+        model = load_model('/home/karol/python_projekty/cv2/sudoku/models/save_at_12.h5')
         #ret, cap = vid.read()
         cap = cv.imread("/home/karol/python_projekty/cv2/sudoku/images/new.jpg")
         shrinked = cap.copy()
-        img_preprocessed = im.preprocess(cap)
+        img_preprocessed = im.preprocess_box(cap)
         conts = cap.copy()
         approx_img = cap.copy()
         precent = 25
@@ -22,10 +22,12 @@ def mainloop():
         approx = im.approx(finded)
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
-        
-        print(boxes[0].shape)
-        box = tf.expand_dims(boxes[0], 0)
-        model.predict(box)
+
+        cv.imshow("Box", boxes[2])
+
+        box = tf.expand_dims(boxes[2], 0)
+        print(box.shape)
+        print(f"############{argmax(model.predict(box))}###############")
 
         cv.imshow("Contours", im.resize(cv.drawContours(conts, finded, 
                     -1, (0,255,0), 3), precent))

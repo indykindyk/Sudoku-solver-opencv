@@ -3,6 +3,7 @@ from numpy import argmax, mean, amax
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
+import tensorflow as tf
 import cv2 as cv
 import images as im
 
@@ -47,7 +48,7 @@ def clean_box(img):
 # load and prepare the image
 def load_image(img):
 	# prepare pixel data
-	img = img.astype('float32')
+	img = np.asarray(img)
 	img = img / 255.0
 	return img
 
@@ -58,12 +59,12 @@ def predict(boxes):
 	index_of_num = 1
 	#give prediction for evry square
 	for img in boxes:
+		img = tf.expand_dims(img, 0)
 		print(img.shape)
 		# load the imagev
-		#img = load_image(img)
+		img = load_image(img)
 		# predict the class
-		img.reshape(1, 128, 128, 3)
-		predict = model.predict(img)
+		predict = model.predict(im.preprocess(img))
 		digit = argmax(predict)
 		#get the probability value
 		probability_value = amax(predict)
