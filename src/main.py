@@ -26,8 +26,9 @@ def mainloop():
         box = boxes[2]
         #box = im.preprocess_box(box)
         cv.imshow("Box", box)
-        #ret1,threshold = cv.threshold(box,163.5,255,cv.THRESH_BINARY_INV)
-        box = tf.expand_dims(box, 0)
+        gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
+        ret1,threshold = cv.threshold(gray,163.5,255,cv.THRESH_BINARY_INV)
+        box = tf.expand_dims(threshold, 0)
         #im.preprocess_box(box)
         print(f"############{argmax(model.predict(box))}###############")
 
