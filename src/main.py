@@ -27,9 +27,8 @@ def mainloop():
         #box = im.preprocess_box(box)
         cv.imshow("Box", box)
         gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
-        ret1,threshold = cv.threshold(gray,163.5,255,cv.THRESH_BINARY_INV)
-        box = tf.expand_dims(threshold, 0)
-        #im.preprocess_box(box)
+        ret1,threshold = cv.threshold(gray,127,255,cv.THRESH_BINARY_INV)
+        box = threshold.reshape(-1,128,128,1)
         print(f"############{argmax(model.predict(box))}###############")
 
         cv.imshow("Contours", im.resize(cv.drawContours(conts, finded, 
