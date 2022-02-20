@@ -3,13 +3,15 @@ import numpy as np
 import images as im
 from utlis import *
 import tensorflow as tf
+import os
 
 #vid = cv.VideoCapture(0)
 
 def mainloop():
-        model = load_model('/home/karol/python_projekty/cv2/sudoku/models/save_at_12.h5')
+        model = load_model(os.path.abspath('../models/save_at_10.h5'))
         #ret, cap = vid.read()
-        cap = cv.imread("/home/karol/python_projekty/cv2/sudoku/images/new.jpg")
+        #load sudoku image
+        cap = cv.imread(os.path.abspath("../images/new.jpg"))
         shrinked = cap.copy()
         img_preprocessed = im.preprocess(cap)
         conts = cap.copy()
@@ -23,9 +25,10 @@ def mainloop():
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
 
-        box = boxes[2]
+        box = "img009-00039.png"
         #box = im.preprocess_box(box)
         cv.imshow("Box", box)
+        #convert to grayscale
         gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
         ret1,threshold = cv.threshold(gray,127,255,cv.THRESH_BINARY_INV)
         box = threshold.reshape(-1,128,128,1)
