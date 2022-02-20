@@ -25,7 +25,7 @@ def mainloop():
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
 
-        box = "img009-00039.png"
+        box = cv.imread("img009-00039.png")
         #box = im.preprocess_box(box)
         cv.imshow("Box", box)
         #convert to grayscale
