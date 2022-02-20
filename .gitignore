@@ -1,4 +1,4 @@
-data
+model_training_data
 models
-__pychache__/
-.vscode/
+src/__pychache__/
+src/.vscode/
