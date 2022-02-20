@@ -1,2 +1,4 @@
 data
 models
+__pychache__/
+.vscode/
