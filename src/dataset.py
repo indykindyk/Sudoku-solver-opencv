@@ -16,7 +16,7 @@ class dataset:
 
         self.X = []
         self.y = []
-        self.DATADIR = os.path.abspath("../data/train")
+        self.DATADIR = os.path.abspath("../model_training_data/train")
 
     def create_training_data(self):
         for category in self.CATEGORIES:
@@ -25,7 +25,7 @@ class dataset:
             for img in tqdm(os.listdir(path)):
                 img_array = cv.imread(os.path.join(path, img))
                 gray = cv.cvtColor(img_array, cv.COLOR_RGB2GRAY)
-                ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
+                ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY)
                 self.train_ds.append([thresh, class_num])
 
     def save(self):
@@ -40,11 +40,11 @@ class dataset:
 
         X = X / 255.0
 
-        pickle_out = open(os.path.abspath("../data/X.pickle"), "wb")
+        pickle_out = open(os.path.abspath("../model_training_data/X.pickle"), "wb")
         pickle.dump(X, pickle_out)
         pickle_out.close()
 
-        pickle_out = open(os.path.abspath("../data/y.pickle"), "wb")
+        pickle_out = open(os.path.abspath("../model_training_data/y.pickle"), "wb")
         pickle.dump(y, pickle_out)
         pickle_out.close()
 

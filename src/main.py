@@ -8,7 +8,8 @@ import os
 #vid = cv.VideoCapture(0)
 
 def mainloop():
-        model = load_model(os.path.abspath('../models/save_at_10.h5'))
+        #tf.config.run_functions_eagerly(True)
+        model = load_model(os.path.abspath('../models/model.h5'))
         #ret, cap = vid.read()
         #load sudoku image
         cap = cv.imread(os.path.abspath("../images/new.jpg"))
@@ -25,15 +26,15 @@ def mainloop():
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
 
-        box = cv.imread("img009-00039.png")
+        box = boxes[6]
+        #box = cv.imread("img009-00039.png")
         #box = im.preprocess_box(box)
-        cv.imshow("Box", box)
+        cv.imwrite("Box.png", box)
         #convert to grayscale
-        gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
-        ret1,threshold = cv.threshold(gray,127,255,cv.THRESH_BINARY_INV)
-        box = threshold.reshape(-1,128,128,1)
-        tf.expand_dims(box, 0)
-        print(f"############{argmax(model.predict(box))}###############")
+        #gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
+        #ret1,threshold = cv.threshold(gray,127,255,cv.THRESH_BINARY_INV)
+        #box = tf.expand_dims(box, 0)
+        #print(f"############{argmax(model.predict(box))}###############")
 
         cv.imshow("Contours", im.resize(cv.drawContours(conts, finded, 
                     -1, (0,255,0), 3), precent))
@@ -45,7 +46,7 @@ def mainloop():
         #cv.imwrite("box_cleaned.jpg", box)
 
         if len(approx) == 4:
-            cv.imshow("Shrinked", im.resize(im.preprocgrayscaleess(im.cut_sudoku(shrinked,
+            cv.imshow("Shrinked", im.resize(im.preprocess(im.cut_sudoku(shrinked,
                        approx)), precent))
         else:
             pass
