@@ -1,10 +1,11 @@
 import numpy as np
-from numpy import argmax, mean, amax
+from numpy import argmax, imag, mean, amax
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
 import cv2 as cv
 import images as im
+from scipy import ndimage
 
 
 predictions = []
@@ -24,28 +25,16 @@ def split_photo(img):
         pass
 
 def clean_box(img):
-	print(img.shape)
 	img = img[10:90, 10:90]
-	(w, h) = img.shape
-	box_contours = im.find_contours(img)
+	w, h = img.shape
+	cy,cx = ndimage.measurements.center_of_mass(img)
+	shiftx = np.round(w/2.0-cx).astype(int)
+	shifty = np.round(h/2.0-cy).astype(int)
+	M = np.float32([[1,0,shiftx],[0,1,shifty]])
+	w,h = img.shape
+	shifted = cv.warpAffine(img,M,(w,h))
+	return shifted
 
-	if len(box_contours) == 0:
-		return img
-
-	biggest = max(box_contours, key=cv.contourArea)
-	mask = np.zeros((w,h), dtype="uint8")
-	cv.drawContours(mask, [biggest], -1, 255, -1)
-
-	precent_filled = cv.countNonZero(mask)/float(w*h) 
-
-	if precent_filled < 0.03:
-	   return img
-
-	digit = cv.bitwise_and(img, img, mask=mask)
-	return digit
-
-# load an image and predict the class
-# load and prepare the image
 def load_image(img):
 	# prepare pixel data
 	img = img.astype('float32')
