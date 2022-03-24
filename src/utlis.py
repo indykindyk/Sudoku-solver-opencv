@@ -25,13 +25,11 @@ def split_photo(img):
         pass
 
 def clean_box(img):
-	img = img[10:90, 10:90]
 	w, h = img.shape
 	cy,cx = ndimage.measurements.center_of_mass(img)
 	shiftx = np.round(w/2.0-cx).astype(int)
 	shifty = np.round(h/2.0-cy).astype(int)
 	M = np.float32([[1,0,shiftx],[0,1,shifty]])
-	w,h = img.shape
 	shifted = cv.warpAffine(img,M,(w,h))
 	return shifted
 

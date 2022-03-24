@@ -79,13 +79,9 @@ def cut_sudoku(input_img, points):
         pass
 
 def preprocess_box(box):
-    gray = cv.cvtColor(box,cv.COLOR_BGR2GRAY)
-    #add blur
-    gray = cv.GaussianBlur(gray, (9, 9), 0)
-    #add bibteralFilter to reduce noise
-    frame = cv.bilateralFilter(gray,9,75,75)
-    ret1,threshold = cv.threshold(frame,0,255,cv.THRESH_BINARY)
-    return threshold
+    gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
+    ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
+    return thresh
 
 
 

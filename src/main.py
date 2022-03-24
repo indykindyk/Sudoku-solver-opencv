@@ -9,10 +9,10 @@ import os
 
 def mainloop():
         #tf.config.run_functions_eagerly(True)
-        #model = load_model(os.path.abspath('../models/model.h5'))
+        model = load_model(os.path.abspath('model.h5'))
         #ret, cap = vid.read()
         #load sudoku image
-        cap = cv.imread(os.path.abspath("../images/ang.jpg"))
+        cap = cv.imread(os.path.abspath("../images/new.jpg"))
         shrinked = cap.copy()
         img_preprocessed = im.preprocess(cap)
         conts = cap.copy()
@@ -25,17 +25,19 @@ def mainloop():
         approx = im.approx(finded)
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
-
-        box = boxes[6]
-        box = box[10:90, 10:90]
+        box = boxes[10]
         #box = cv.imread("img")
-        pre = im.preprocess(box)
-        cv.imshow("Box.png", clean_box(pre))
+        pre = im.preprocess_box(box)
+        pre = pre/255
+        pre = pre[10:90, 10:90]
+        pre = clean_box(pre)
+        pre = cv.resize(pre,(28,28))
+        cv.imshow("Box.png", pre)
         #convert to grayscale
         #gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
         #ret1,threshold = cv.threshold(gray,127,255,cv.THRESH_BINARY_INV)
-        #box = tf.expand_dims(box, 0)
-        #print(f"############{argmax(model.predict(box))}###############")
+        box =  np.expand_dims(pre, axis=0)
+        print(f"############{argmax(model.predict(box))}###############")
 
         cv.imshow("Contours", im.resize(cv.drawContours(conts, finded, 
                     -1, (0,255,0), 3), precent))
