@@ -25,7 +25,7 @@ def mainloop():
         approx = im.approx(finded)
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
-        box = boxes[10]
+        box = boxes[23]
         #box = cv.imread("img")
         pre = im.preprocess_box(box)
         pre = pre/255
