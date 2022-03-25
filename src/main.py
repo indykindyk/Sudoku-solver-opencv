@@ -12,7 +12,7 @@ def mainloop():
         model = load_model(os.path.abspath('model.h5'))
         #ret, cap = vid.read()
         #load sudoku image
-        cap = cv.imread(os.path.abspath("../images/new.jpg"))
+        cap = cv.imread(os.path.abspath("../images/ang.jpg"))
         shrinked = cap.copy()
         img_preprocessed = im.preprocess(cap)
         conts = cap.copy()
@@ -25,7 +25,7 @@ def mainloop():
         approx = im.approx(finded)
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
-        box = boxes[23]
+        box = boxes[6]
         #box = cv.imread("img")
         pre = im.preprocess_box(box)
         pre = pre/255
@@ -43,8 +43,8 @@ def mainloop():
                     -1, (0,255,0), 3), precent))
         cv.imshow("Approx", im.resize(cv.drawContours(approx_img, approx,
                     -1, (0,255,0), 20), precent))
-        #cv.imshow("Predictions", im.resize(display_predictions(boxes,
-        #            np.zeros((900,900,3))), precent))
+        cv.imshow("Predictions", im.resize(display_predictions(boxes,
+                    np.zeros((900,900,3))), precent))
 
         #cv.imwrite("box_cleaned.jpg", box)
 
