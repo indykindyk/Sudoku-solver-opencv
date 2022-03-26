@@ -8,11 +8,10 @@ import os
 #vid = cv.VideoCapture(0)
 
 def mainloop():
-        #tf.config.run_functions_eagerly(True)
         model = load_model(os.path.abspath('model.h5'))
         #ret, cap = vid.read()
         #load sudoku image
-        cap = cv.imread(os.path.abspath("../images/ang.jpg"))
+        cap = cv.imread(os.path.abspath("../images/new.jpg"))
         shrinked = cap.copy()
         img_preprocessed = im.preprocess(cap)
         conts = cap.copy()
