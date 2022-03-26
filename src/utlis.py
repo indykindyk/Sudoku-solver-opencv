@@ -59,10 +59,12 @@ def predict(boxes):
 		digit = argmax(predict)
 		#get the probability value
 		probability_value = amax(predict)
-		print(f"[{x}] pred: {digit}, conf: {round(probability_value*100, 2)} %")
+		print(f"[{x}] pred: {digit}, conf: {round(probability_value)} %")
 		x+=1
-		# if 
-		predictions.append(digit+1)
+		if probability_value*100 < 45 :
+			predictions.append(0)
+		else:
+			predictions.append(digit+1)
 	return predictions
 
 def display_predictions(boxes, img):
