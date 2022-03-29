@@ -61,7 +61,7 @@ def predict(boxes):
 		probability_value = amax(predict)
 		print(f"[{x}] pred: {digit}, conf: {round(probability_value)} %")
 		x+=1
-		if probability_value*100 < 45 :
+		if probability_value < 10 :
 			predictions.append(0)
 		else:
 			predictions.append(digit+1)

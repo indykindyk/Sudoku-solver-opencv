@@ -24,12 +24,12 @@ def mainloop():
         approx = im.approx(finded)
         #split photo to 81 squares
         boxes = split_photo(im.cut_sudoku(shrinked, approx))
-        box = boxes[6]
+        box = boxes[71]
         pre = im.preprocess_box(box)
         pre = pre[10:90, 10:90]
         pre = clean_box(pre)
-        pre = pre/255
         pre = cv.resize(pre,(28,28))
+        cv.imwrite("Box.png", pre)
         cv.imshow("Box.png", pre)
         #convert to grayscale
         #gray = cv.cvtColor(box,cv.COLOR_RGB2GRAY)
