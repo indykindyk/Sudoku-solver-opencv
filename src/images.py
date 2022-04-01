@@ -83,6 +83,14 @@ def preprocess_box(box):
     ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
     return thresh
 
+def overlay(img, biggest, w, h):
+    pts2 = np.float32(biggest) 
+    pts1 =  np.float32([[0, 0],[w, 0], [0, h],[w, h]]) 
+    matrix = cv.getPerspectiveTransform(pts1, pts2)  
+    imgInvWarpColored = img.copy()
+    imgInvWarpColored = cv.warpPerspective(img, matrix, (w, h))
+    return imgInvWarpColored
+
 
 
 
