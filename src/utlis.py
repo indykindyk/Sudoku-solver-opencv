@@ -1,3 +1,4 @@
+import numbers
 import numpy as np
 from numpy import argmax, imag, mean, amax
 from keras.preprocessing.image import load_img
@@ -67,8 +68,15 @@ def predict(boxes):
 			predictions.append(digit+1)
 	return np.asarray(predictions)
 
-def display_predictions(boxes, img):
-	predictions = predict(boxes)
+def display_predictions(boxes, img, solved=False):
+	global posArray
+	if not solved:
+		predictions = predict(boxes)
+		posArray = np.where(predictions > 0,0,1)
+	else:
+		predictions = boxes
+		posArray = None
+
 	imgW = img.shape[1]/9
 	imgH = img.shape[0]/9
 	for x in range(9):
@@ -79,5 +87,5 @@ def display_predictions(boxes, img):
 				cv.FONT_HERSHEY_SIMPLEX, 2, (255,0,255), 2,
 				cv.LINE_AA)
 
-	return img, predictions
+	return img, predictions, posArray
 
