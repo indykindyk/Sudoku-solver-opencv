@@ -65,7 +65,7 @@ def predict(boxes):
 			predictions.append(0)
 		else:
 			predictions.append(digit+1)
-	return predictions
+	return np.asarray(predictions)
 
 def display_predictions(boxes, img):
 	predictions = predict(boxes)
@@ -79,5 +79,5 @@ def display_predictions(boxes, img):
 				cv.FONT_HERSHEY_SIMPLEX, 2, (255,0,255), 2,
 				cv.LINE_AA)
 
-	return img
+	return img, predictions
 
