@@ -70,7 +70,7 @@ def approx(img):
 def cut_sudoku(input_img, points):
     try:
         width, height = 1152, 1152
-        src = np.float32([points[0],points[1],points[2],points[3]])
+        src = np.float32([*points])
         pts2 = np.float32([[height,0],[0,0],[0, width],[height, width]])
         matrix = cv.getPerspectiveTransform(src, pts2)
         result = cv.warpPerspective(input_img, matrix, (width, height))
@@ -83,17 +83,16 @@ def preprocess_box(box):
     ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
     return thresh
 
-def overlay(img, biggest, w, h):
+def overlay(img_out, img_solved, biggest, w, h):
+    print(img_out.dtype)
+    print(img_solved.dtype)
+    img_solved = img_solved.astype('uint8')
     pts2 = np.float32(biggest) 
-    pts1 =  np.float32([[0, 0],[w, 0], [0, h],[w, h]]) 
+    pts1 =  np.float32([[1152, 0],[0, 0], [0, 1152],[1152, 1152]]) 
     matrix = cv.getPerspectiveTransform(pts1, pts2)  
-    imgInvWarpColored = img.copy()
-    imgInvWarpColored = cv.warpPerspective(img, matrix, (w, h))
-    return imgInvWarpColored
-
-
-
-
-
-
-
+    imgInvWarpColored = img_solved.copy()
+    imgInvWarpColored = cv.warpPerspective(img_solved, matrix, (w, h))
+    print(imgInvWarpColored.shape)
+    print(img_out.shape)    
+    inv_perspective = cv.addWeighted(imgInvWarpColored, 1, img_out, 0.5, 1)
+    return inv_perspective

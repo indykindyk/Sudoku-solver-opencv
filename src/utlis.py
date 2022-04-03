@@ -8,6 +8,7 @@ import cv2 as cv
 import images as im
 from scipy import ndimage
 
+model = load_model('model.h5')	
 
 predictions = []
 
@@ -43,7 +44,6 @@ def load_image(img):
 # load an image and predict the class
 def predict(boxes):
 	# load model
-	model = load_model('model.h5')	
 	x = 1
 	#give prediction for evry square
 	for img in boxes:
