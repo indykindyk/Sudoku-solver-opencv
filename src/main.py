@@ -18,14 +18,15 @@ def mainloop():
         conts = cap.copy()
         approx_img = cap.copy()
         precent = 25
-        (h,w) = cap.shape[0], cap.shape[1]
+        (h,w) = 4000,2248
 
         #find all contours form image
         finded = im.find_contours(img_preprocessed)
         #find corners from biggest contour
         approx = im.approx(finded)
         #split photo to 81 squares
-        boxes = split_photo(im.cut_sudoku(shrinked, approx))
+        shrinked_board = im.cut_sudoku(shrinked, approx)
+        boxes = split_photo(shrinked_board)
         prediction_img, predictions, posarr = display_predictions(boxes, np.zeros((900,900,3)))
         board = np.asarray(predictions)
         board = board.reshape(9,9)
@@ -33,14 +34,14 @@ def mainloop():
         print(board)
         solved = np.reshape(board, (81))*posarr
         print(solved)
-        solved_img, predictions, _ = display_predictions(solved, np.zeros((900,900,3)), solved=True)
-        solved_img = im.overlay(solved_img, approx, w, h)
+        solved_img, predictions, _ = display_predictions(solved, np.zeros((1152,1152,3)), solved=True)
+        simg = im.overlay(cap, solved_img, approx, w, h)
         cv.imshow("Contours", im.resize(cv.drawContours(conts, finded, 
                     -1, (0,255,0), 3), precent))
         cv.imshow("Approx", im.resize(cv.drawContours(approx_img, approx,
                     -1, (0,255,0), 20), precent))
         cv.imshow("Predictions", im.resize(prediction_img,40))
-        cv.imshow("solved img", im.resize(solved_img,40))        
+        cv.imshow("solved img", im.resize(simg,precent))        
 
 
         if len(approx) == 4:
