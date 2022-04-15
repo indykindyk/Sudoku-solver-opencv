@@ -55,6 +55,11 @@ def predict(boxes):
 		pre = pre[10:90, 10:90]
 		pre = clean_box(pre)
 		pre = cv.resize(pre,(28,28))
+
+		if pre.sum() <= 28**2*255 - 28 * 1 * 255:
+			predictions.append(0)
+			continue
+		
 		box =  np.expand_dims(pre, axis=0)
 		predict = model.predict(box)
 		digit = argmax(predict)
@@ -62,10 +67,8 @@ def predict(boxes):
 		probability_value = amax(predict)
 		print(f"[{x}] pred: {digit}, conf: {round(probability_value)} %")
 		x+=1
-		if probability_value < 10 :
-			predictions.append(0)
-		else:
-			predictions.append(digit+1)
+		predictions.append(digit+1)
+
 	return np.asarray(predictions)
 
 def display_predictions(boxes, img, solved=False):

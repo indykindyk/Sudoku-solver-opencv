@@ -6,7 +6,7 @@ import tensorflow as tf
 import os
 import sudoku
 
-#vid = cv.VideoCapture(0)
+vid = cv.VideoCapture(0)
 
 def mainloop():
         while True: 
