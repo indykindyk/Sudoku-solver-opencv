@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
 import utlis
+import math
+from utlis import *
 
 def preprocess(img):
     """
@@ -21,6 +23,23 @@ def preprocess(img):
     closing = cv.morphologyEx(threshold, cv.MORPH_CLOSE, kernel)
     dilated = cv.dilate(closing, None, 5)
     return dilated
+
+def angle_between(vector_1, vector_2):
+    unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+    unit_vector2 = vector_2 / np.linalg.norm(vector_2)
+    dot_droduct = np.dot(unit_vector_1, unit_vector2)
+    angle = np.arccos(dot_droduct)
+    return angle * 57.2958 
+
+def side_lengths_are_too_different(A, B, C, D, eps_scale):
+    AB = math.sqrt((A[0]-B[0])**2 + (A[1]-B[1])**2)
+    AD = math.sqrt((A[0]-D[0])**2 + (A[1]-D[1])**2)
+    BC = math.sqrt((B[0]-C[0])**2 + (B[1]-C[1])**2)
+    CD = math.sqrt((C[0]-D[0])**2 + (C[1]-D[1])**2)
+    shortest = min(AB, AD, BC, CD)
+    longest = max(AB, AD, BC, CD)
+    return longest > eps_scale * shortest
+
 
 def resize(img, scale):
     #if image may not change pass
@@ -44,6 +63,10 @@ def find_contours(img):
     #print(contours)
     return contours
 
+def approx_90_degrees(angle, epsilon):
+    return abs(angle - 90) < epsilon
+
+
 def draw_lines(img, output):
     lines = cv.HoughLinesP(img,1,np.pi/180,100,minLineLength=100,maxLineGap=12)
     for line in lines:
@@ -65,19 +88,18 @@ def approx(img):
     cnt = biggest_contour(img)
     epsilon = 0.01*cv.arcLength(cnt,True)
     approx = cv.approxPolyDP(cnt,epsilon,True)
-    return approx
+    if len(approx)  == 4:
+        return approx
+    return None
 
 def cut_sudoku(input_img, points):
-    try:
-        width, height = 1152, 1152
-        src = np.float32([*points])
-        pts2 = np.float32([[height,0],[0,0],[0, width],[height, width]])
-        matrix = cv.getPerspectiveTransform(src, pts2)
-        result = cv.warpPerspective(input_img, matrix, (width, height))
-        return result
-    except:
-        pass
-
+    width, height = 1152, 1152
+    src = np.float32([*points])
+    pts2 = np.float32([[height,0],[0,0],[0, width],[height, width]])
+    matrix = cv.getPerspectiveTransform(src, pts2)
+    result = cv.warpPerspective(input_img, matrix, (width, height))
+    return result
+    
 def preprocess_box(box):
     gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
     ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
@@ -90,9 +112,111 @@ def overlay(img_out, img_solved, biggest, w, h):
     pts2 = np.float32(biggest) 
     pts1 =  np.float32([[1152, 0],[0, 0], [0, 1152],[1152, 1152]]) 
     matrix = cv.getPerspectiveTransform(pts1, pts2)  
-    imgInvWarpColored = img_solved.copy()
-    imgInvWarpColored = cv.warpPerspective(img_solved, matrix, (w, h))
-    print(imgInvWarpColored.shape)
+    imgInvimgColored = img_solved.copy()
+    imgInvimgColored = cv.imgPerspective(img_solved, matrix, (w, h))
+    print(imgInvimgColored.shape)
     print(img_out.shape)    
-    inv_perspective = cv.addWeighted(imgInvWarpColored, 1, img_out, 0.5, 1)
+    inv_perspective = cv.addWeighted(imgInvimgColored, 1, img_out, 0.5, 1)
     return inv_perspective
+    
+def largest_connected_component(image):
+
+    image = image.astype('uint8')
+    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(image, connectivity=8)
+    sizes = stats[:, -1]
+
+    if(len(sizes) <= 1):
+        blank_image = np.zeros(image.shape)
+        blank_image.fill(255)
+        return blank_image
+
+    max_label = 1
+    # Start from component 1 (not 0) because we want to leave out the background
+    max_size = sizes[1]     
+
+    for i in range(2, nb_components):
+        if sizes[i] > max_size:
+            max_label = i
+            max_size = sizes[i]
+
+    img2 = np.zeros(output.shape)
+    img2.fill(255)
+    img2[output == max_label] = 0
+    return img2
+
+
+def recognize_and_solve_sudoku(input_sudoku):
+    eps_angle = 20
+    out_sudoku = np.zeros((900,900))
+    #preprocess current camera frame
+    img_preprocessed = preprocess(input_sudoku)
+    #find all contours form image
+    finded = find_contours(img_preprocessed)
+    #find points of corners of sudoku 
+    corners = approx(finded)
+
+    if corners is None:
+        return input_sudoku
+    rect = np.zeros((4, 2), dtype = "float32")
+    corners = corners.reshape(4,2)
+     # Find top left (sum of coordinates is the smallest)
+    sum = 10000
+    index = 0
+    for i in range(4):
+        if(corners[i][0]+corners[i][1] < sum):
+            sum = corners[i][0]+corners[i][1]
+            index = i
+    rect[0] = corners[index]
+    corners = np.delete(corners, index, 0)
+
+    # Find bottom right (sum of coordinates is the biggest)
+    sum = 0
+    for i in range(3):
+        if(corners[i][0]+corners[i][1] > sum):
+            sum = corners[i][0]+corners[i][1]
+            index = i
+    rect[2] = corners[index]
+    corners = np.delete(corners, index, 0)
+
+    # Find top right (Only 2 points left, should be easy
+    if(corners[0][0] > corners[1][0]):
+        rect[1] = corners[0]
+        rect[3] = corners[1]
+        
+    else:
+        rect[1] = corners[1]
+        rect[3] = corners[0]
+
+    A = rect[3]
+    B = rect[2]
+    C = rect[1]
+    D = rect[0]
+
+    AB = B - A      
+    AD = D - A
+    BC = C - B
+    DC = C - D
+
+    rect = rect.reshape(4,2)
+
+    if not (approx_90_degrees(angle_between(AB,AD), eps_angle) and approx_90_degrees(angle_between(AB,BC), eps_angle)
+    and approx_90_degrees(angle_between(BC,DC), eps_angle) and approx_90_degrees(angle_between(AD,DC), eps_angle)):
+        return input_sudoku
+
+    eps_scale = 1.2     # Longest cannot be longer than epsScale * shortest
+    if(side_lengths_are_too_different(A, B, C, D, eps_scale)):
+        return input_sudoku
+
+    shrinked_board = cut_sudoku(input_sudoku, rect)
+
+    shrinked_board = cv.flip(shrinked_board, 1)
+
+    boxes = split_photo(shrinked_board)
+
+
+    prediction_img, predictions, posarr = display_predictions(boxes, out_sudoku)
+
+    #pre = im.preprocess_box(boxes[3])
+    #pre = clean_box(pre)
+
+    return prediction_img

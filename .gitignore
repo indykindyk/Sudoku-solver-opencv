@@ -2,3 +2,4 @@ model_training_data/
 models/
 src/__pychache__/
 src/.vscode/
+.directory/

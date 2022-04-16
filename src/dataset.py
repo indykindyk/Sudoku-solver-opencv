@@ -27,9 +27,9 @@ class dataset:
             for img in tqdm(os.listdir(path)):
                 img_array = cv.imread(os.path.join(path, img))
                 gray = cv.cvtColor(img_array, cv.COLOR_RGB2GRAY)
-                ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
-                pre = clean_box(thresh)
-                self.train_ds.append([cv.resize(pre, (28, 28)), class_num])
+                ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY)
+                #pre = clean_box(thresh)
+                self.train_ds.append([cv.resize(thresh, (28, 28)), class_num])
 
     def save(self):
         random.shuffle(self.train_ds)
