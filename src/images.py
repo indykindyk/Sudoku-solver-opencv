@@ -93,16 +93,13 @@ def approx(img):
     return None
 
 def cut_sudoku(input_img, points):
-    try:
-        width, height = 1152, 1152
-        src = np.float32([*points])
-        pts2 = np.float32([[height,0],[0,0],[0, width],[height, width]])
-        matrix = cv.getPerspectiveTransform(src, pts2)
-        result = cv.warpPerspective(input_img, matrix, (width, height))
-        return result
-    except:
-        pass
-
+    width, height = 1152, 1152
+    src = np.float32([*points])
+    pts2 = np.float32([[height,0],[0,0],[0, width],[height, width]])
+    matrix = cv.getPerspectiveTransform(src, pts2)
+    result = cv.warpPerspective(input_img, matrix, (width, height))
+    return result
+    
 def preprocess_box(box):
     gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
     ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
@@ -115,12 +112,38 @@ def overlay(img_out, img_solved, biggest, w, h):
     pts2 = np.float32(biggest) 
     pts1 =  np.float32([[1152, 0],[0, 0], [0, 1152],[1152, 1152]]) 
     matrix = cv.getPerspectiveTransform(pts1, pts2)  
-    imgInvWarpColored = img_solved.copy()
-    imgInvWarpColored = cv.warpPerspective(img_solved, matrix, (w, h))
-    print(imgInvWarpColored.shape)
+    imgInvimgColored = img_solved.copy()
+    imgInvimgColored = cv.imgPerspective(img_solved, matrix, (w, h))
+    print(imgInvimgColored.shape)
     print(img_out.shape)    
-    inv_perspective = cv.addWeighted(imgInvWarpColored, 1, img_out, 0.5, 1)
+    inv_perspective = cv.addWeighted(imgInvimgColored, 1, img_out, 0.5, 1)
     return inv_perspective
+    
+def largest_connected_component(image):
+
+    image = image.astype('uint8')
+    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(image, connectivity=8)
+    sizes = stats[:, -1]
+
+    if(len(sizes) <= 1):
+        blank_image = np.zeros(image.shape)
+        blank_image.fill(255)
+        return blank_image
+
+    max_label = 1
+    # Start from component 1 (not 0) because we want to leave out the background
+    max_size = sizes[1]     
+
+    for i in range(2, nb_components):
+        if sizes[i] > max_size:
+            max_label = i
+            max_size = sizes[i]
+
+    img2 = np.zeros(output.shape)
+    img2.fill(255)
+    img2[output == max_label] = 0
+    return img2
+
 
 def recognize_and_solve_sudoku(input_sudoku):
     eps_angle = 20
@@ -190,8 +213,10 @@ def recognize_and_solve_sudoku(input_sudoku):
 
     boxes = split_photo(shrinked_board)
 
+
     prediction_img, predictions, posarr = display_predictions(boxes, out_sudoku)
 
+    #pre = im.preprocess_box(boxes[3])
+    #pre = clean_box(pre)
+
     return prediction_img
-    
-    
