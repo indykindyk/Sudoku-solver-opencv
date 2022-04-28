@@ -5,7 +5,7 @@ import cv2 as cv
 import pickle
 import random
 import images as im
-from utlis import clean_box
+#from utlis import clean_box
 
 
 class dataset:

@@ -144,7 +144,6 @@ def largest_connected_component(image):
     img2[output == max_label] = 0
     return img2
 
-
 def recognize_and_solve_sudoku(input_sudoku):
     eps_angle = 20
     out_sudoku = np.zeros((900,900))
@@ -214,9 +213,10 @@ def recognize_and_solve_sudoku(input_sudoku):
     boxes = split_photo(shrinked_board)
 
 
-    prediction_img, predictions, posarr = display_predictions(boxes, out_sudoku)
+    prediction_img, predictions, posarr = display_predictions(boxes)
 
-    #pre = im.preprocess_box(boxes[3])
-    #pre = clean_box(pre)
+    pre = preprocess_box(boxes[0])
+    print(pre)
+    pre = clean_box(pre)
 
     return prediction_img
