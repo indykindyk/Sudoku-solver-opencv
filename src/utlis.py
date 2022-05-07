@@ -26,32 +26,6 @@ def split_photo(img):
     except TypeError:
         pass
 
-def largest_connected_component(image):
-
-    image = image.astype('uint8')
-    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(image, connectivity=8)
-    sizes = stats[:, -1]
-
-    if(len(sizes) <= 1):
-        blank_image = np.zeros(image.shape)
-        blank_image.fill(0)
-        return blank_image
-
-    max_label = 1
-    # Start from component 1 (not 0) because we want to leave out the background
-    max_size = sizes[1]     
-
-    for i in range(2, nb_components):
-        if sizes[i] > max_size:
-            max_label = i
-            max_size = sizes[i]
-
-    img2 = np.zeros(output.shape)
-    img2.fill(0)
-    img2[output == max_label] = 255
-    return img2
-
-
 def clean_box(img):
     ratio = 0.6     
     while np.sum(img[0]) >= (1-ratio) * img.shape[1] * 255:
@@ -66,14 +40,13 @@ def clean_box(img):
     while np.sum(img[-1]) >= (1-ratio) * img.shape[0] * 255:
         img = img[:-1]  
 
-    crop_image = largest_connected_component(img)
     #w, h = img.shape
     #cy,cx = ndimage.measurements.center_of_mass(img)
     #shiftx = np.round(w/2.0-cx).astype(int)
     #shifty = np.round(h/2.0-cy).astype(int)
     #M = np.float32([[1,0,shiftx],[0,1,shifty]])
     #shifted = cv.warpAffine(img,M,(w,h))
-    return crop_image
+    return img
 
 def load_image(img):
     # prepare pixel data
@@ -89,9 +62,7 @@ def predict(boxes):
     for img in boxes:
         pre = im.preprocess_box(img)
         pre = clean_box(pre)
-        pre = pre/255
         pre = im.largest_connected_component(pre)
-        #pre = cv.bitwise_not(pre)
         pre = cv.resize(pre,(28,28))
         name = f"box{x}.png"
         x+=1
@@ -114,11 +85,12 @@ def predict(boxes):
             continue
 
         box =  np.expand_dims(pre, axis=0)
+        box = box/255.
         predict = model.predict(box)
         digit = argmax(predict)
         #get the probability value
         probability_value = amax(predict)
-        print(f"[{x}] pred: {digit+1}, conf: {round(probability_value)} %")
+        print(f"[{x}] pred: {digit+1}, conf: {probability_value} %")
         predictions.append(digit)
 
     return np.asarray(predictions)
@@ -132,14 +104,13 @@ def display_predictions(boxes, solved=False):
         predictions = boxes
         posArray = None
 
-    print(len(predictions))
     img = np.zeros((800,800))
     imgW = img.shape[1]/9
     imgH = img.shape[0]/9
     for x in range(9):
         for y in range(9):
             if predictions[(y*9)+x] != 0:
-                cv.putText(img, str(predictions[(y*9)+x]),
+                cv.putText(img, str(predictions[(y*9)+x]+1),
                 (int(x*imgW+imgW/2-10), int((y+0.8)*imgH)),
                 cv.FONT_HERSHEY_SIMPLEX, 2, (255,0,255), 2,
                 cv.LINE_AA)
