@@ -1,9 +1,8 @@
-import math
 import numpy as np
 from numpy import argmax, imag, mean, amax
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
-from keras.models import load_model
+from tensorflow.keras.preprocessing.image import load_img
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.models import load_model
 import cv2 as cv
 import images as im
 from scipy import ndimage
@@ -25,6 +24,33 @@ def split_photo(img):
             return boxes
     except TypeError:
         pass
+
+def get_best_shift(img):
+    cy,cx = ndimage.measurements.center_of_mass(img)
+
+    rows,cols = img.shape
+    shiftx = np.round(cols/2.0-cx).astype(int)
+    shifty = np.round(rows/2.0-cy).astype(int)
+
+    return shiftx,shifty
+
+def shift(img,sx,sy):
+    rows,cols = img.shape
+    M = np.float32([[1,0,sx],[0,1,sy]])
+    shifted = cv.warpAffine(img,M,(cols,rows))
+    return shifted
+
+def shift_according_to_center_of_mass(img):
+    img = cv.bitwise_not(img)
+
+    # Centralize the image according to center of mass
+    shiftx,shifty = get_best_shift(img)
+    shifted = shift(img,shiftx,shifty)
+    img = shifted
+
+    img = cv.bitwise_not(img)
+    return img
+
 
 def clean_box(img):
     ratio = 0.6     
@@ -62,8 +88,8 @@ def predict(boxes):
     for img in boxes:
         pre = im.preprocess_box(img)
         pre = clean_box(pre)
-        pre = im.largest_connected_component(pre)
         pre = cv.resize(pre,(28,28))
+        pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         x+=1
         cv.imwrite(name, pre)

@@ -5,8 +5,7 @@ import cv2 as cv
 import pickle
 import random
 import images as im
-#from utlis import clean_box
-
+from utlis import *
 
 class dataset:
     def __init__(self):
@@ -52,3 +51,4 @@ class dataset:
 data = dataset()
 data.create_training_data()
 data.save()
+        

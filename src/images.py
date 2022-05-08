@@ -215,8 +215,7 @@ def recognize_and_solve_sudoku(input_sudoku):
 
     prediction_img, predictions, posarr = display_predictions(boxes)
 
-    pre = preprocess_box(boxes[0])
-    print(pre)
-    pre = clean_box(pre)
+    y_true = [0,0,0,5,0,0,0,1,0,0,0,7,6,0,0,2,0,0,0,8,0,0,4,3,0,0,0,0,9,1,0,0,0,0,0,8,0,0,2,0,6,0,5,0,0,8,0,0,0,0,0,0,6,7,0,0,0,0,4,3,0,0,8,0,0,0,5,0,0,2,9,0,0,0,6,0,0,0,1,0,0,0]
+    print(predictions==y_true)
 
     return prediction_img
