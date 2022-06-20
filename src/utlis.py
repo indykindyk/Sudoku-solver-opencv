@@ -52,28 +52,6 @@ def shift_according_to_center_of_mass(img):
     return img
 
 
-def clean_box(img):
-    ratio = 0.6     
-    while np.sum(img[0]) >= (1-ratio) * img.shape[1] * 255:
-        img = img[1:]
-    # Bottom
-    while np.sum(img[:,-1]) >= (1-ratio) * img.shape[1] * 255:
-        img = np.delete(img, -1, 1)
-    # Left
-    while np.sum(img[:,0]) >= (1-ratio) * img.shape[0] * 255:
-        img = np.delete(img, 0, 1)
-    # Right
-    while np.sum(img[-1]) >= (1-ratio) * img.shape[0] * 255:
-        img = img[:-1]  
-
-    #w, h = img.shape
-    #cy,cx = ndimage.measurements.center_of_mass(img)
-    #shiftx = np.round(w/2.0-cx).astype(int)
-    #shifty = np.round(h/2.0-cy).astype(int)
-    #M = np.float32([[1,0,shiftx],[0,1,shifty]])
-    #shifted = cv.warpAffine(img,M,(w,h))
-    return img
-
 def load_image(img):
     # prepare pixel data
     img = img.astype('float32')
@@ -87,9 +65,9 @@ def predict(boxes):
     #give prediction for evry square
     for img in boxes:
         pre = im.preprocess_box(img)
-        pre = clean_box(pre)
         pre = cv.resize(pre,(28,28))
-        pre = im.largest_connected_component(pre)
+        #pre = clean_box(pre)
+        #pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         x+=1
         cv.imwrite(name, pre)

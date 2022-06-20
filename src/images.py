@@ -102,8 +102,27 @@ def cut_sudoku(input_img, points):
     
 def preprocess_box(box):
     gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
-    ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY_INV)
-    return thresh
+    blur = cv.bilateralFilter(gray,9,75,75)
+    th3 = cv.adaptiveThreshold(blur,150,cv.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv.THRESH_BINARY,11,2)
+    return th3
+
+
+def clean_box(img):
+    ratio = 0.6     
+    while np.sum(img[0]) <= (1-ratio) * img.shape[1] * 255:
+        img = img[1:]
+    # Bottom
+    while np.sum(img[:,-1]) <= (1-ratio) * img.shape[1] * 255:
+        img = np.delete(img, -1, 1)
+    # Left
+    while np.sum(img[:,0]) <= (1-ratio) * img.shape[0] * 255:
+        img = np.delete(img, 0, 1)
+    # Right
+    while np.sum(img[-1]) <= (1-ratio) * img.shape[0] * 255:
+        img = img[:-1]  
+
+    return img
 
 def overlay(img_out, img_solved, biggest, w, h):
     print(img_out.dtype)
