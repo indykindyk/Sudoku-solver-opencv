@@ -153,14 +153,14 @@ def largest_connected_component(image):
     # Start from component 1 (not 0) because we want to leave out the background
     max_size = sizes[1]     
 
-    for i in range(2, nb_components):
+    for i in range(1, nb_components):
         if sizes[i] > max_size:
             max_label = i
             max_size = sizes[i]
 
     img2 = np.zeros(output.shape)
-    img2.fill(255)
-    img2[output == max_label] = 0
+    img2.fill(0)
+    img2[output == max_label] = 255
     return img2
 
 def recognize_and_solve_sudoku(input_sudoku):
@@ -234,7 +234,6 @@ def recognize_and_solve_sudoku(input_sudoku):
 
     prediction_img, predictions, posarr = display_predictions(boxes)
 
-    y_true = [0,0,0,5,0,0,0,1,0,0,0,7,6,0,0,2,0,0,0,8,0,0,4,3,0,0,0,0,9,1,0,0,0,0,0,8,0,0,2,0,6,0,5,0,0,8,0,0,0,0,0,0,6,7,0,0,0,0,4,3,0,0,8,0,0,0,5,0,0,2,9,0,0,0,6,0,0,0,1,0,0,0]
-    print(predictions==y_true)
+
 
     return prediction_img

@@ -66,8 +66,8 @@ def predict(boxes):
     for img in boxes:
         pre = im.preprocess_box(img)
         pre = cv.resize(pre,(28,28))
-        #pre = clean_box(pre)
-        #pre = im.largest_connected_component(pre)
+        #pre = im.clean_box(pre)
+        pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         x+=1
         cv.imwrite(name, pre)
