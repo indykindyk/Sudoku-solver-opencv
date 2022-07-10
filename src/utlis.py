@@ -65,12 +65,12 @@ def predict(boxes):
     #give prediction for evry square
     for img in boxes:
         pre = im.preprocess_box(img)
-        pre = cv.resize(pre,(28,28))
         #pre = im.clean_box(pre)
-        pre = im.largest_connected_component(pre)
+        #pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         x+=1
         cv.imwrite(name, pre)
+        pre = cv.resize(pre,(28,28))
 
         if pre.sum() >= 28**2*255 - 28 * 1 * 255:
             predictions.append(0)
