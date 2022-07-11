@@ -7,7 +7,7 @@ import cv2 as cv
 import images as im
 from scipy import ndimage
 
-model = load_model('model.h5')	
+model = load_model('models/model-10-0.99.h5')	
 
 predictions = []
 
@@ -65,7 +65,7 @@ def predict(boxes):
     #give prediction for evry square
     for img in boxes:
         pre = im.preprocess_box(img)
-        #pre = im.clean_box(pre)
+        pre = im.prepare_box(pre)
         #pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         x+=1
@@ -94,7 +94,7 @@ def predict(boxes):
         digit = argmax(predict)
         #get the probability value
         probability_value = amax(predict)
-        print(f"[{x}] pred: {digit+1}, conf: {probability_value} %")
+        print(f"[{x}] pred: {digit+1}, conf: {'%.2f'%round(probability_value, 2)} %")
         predictions.append(digit)
 
     return np.asarray(predictions)
@@ -114,7 +114,7 @@ def display_predictions(boxes, solved=False):
     for x in range(9):
         for y in range(9):
             if predictions[(y*9)+x] != 0:
-                cv.putText(img, str(predictions[(y*9)+x]+1),
+                cv.putText(img, str(predictions[(y*9)+x]),
                 (int(x*imgW+imgW/2-10), int((y+0.8)*imgH)),
                 cv.FONT_HERSHEY_SIMPLEX, 2, (255,0,255), 2,
                 cv.LINE_AA)

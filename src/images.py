@@ -40,23 +40,6 @@ def side_lengths_are_too_different(A, B, C, D, eps_scale):
     longest = max(AB, AD, BC, CD)
     return longest > eps_scale * shortest
 
-
-def resize(img, scale):
-    #if image may not change pass
-    if scale == 0:
-        pass
-
-    #calculate the 50 percent of original dimensions
-    width = int(img.shape[1] * scale / 100)
-    height = int(img.shape[0] * scale / 100)
-
-    # dsize
-    dsize = (width, height)
-
-    # resize image
-    output = cv.resize(img, dsize)
-    return output
-
 def find_contours(img):
     contours, _ = cv.findContours(img, cv.RETR_TREE,
             cv.CHAIN_APPROX_SIMPLE)
@@ -102,26 +85,25 @@ def cut_sudoku(input_img, points):
     
 def preprocess_box(box):
     gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
-    blur = cv.GaussianBlur(gray,(5,5),0)
+    blur = cv.GaussianBlur(gray,(3,3),0)
     th3 = cv.adaptiveThreshold(blur,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,\
             cv.THRESH_BINARY,11,2)
     return th3
 
 
-def clean_box(img):
-    ratio = 0.6     
-    while np.sum(img[0]) <= (1-ratio) * img.shape[1] * 255:
-        img = img[1:]
-    # Bottom
-    while np.sum(img[:,-1]) <= (1-ratio) * img.shape[1] * 255:
-        img = np.delete(img, -1, 1)
-    # Left
-    while np.sum(img[:,0]) <= (1-ratio) * img.shape[0] * 255:
-        img = np.delete(img, 0, 1)
-    # Right
-    while np.sum(img[-1]) <= (1-ratio) * img.shape[0] * 255:
-        img = img[:-1]  
-
+def prepare_box(img):
+    img = np.array(img)
+    img = img[20:102, 20:102]
+    mean = img.mean()
+    if mean > 250:
+        return img
+    non_empty_columns = np.where(img.min(axis=1)<mean)[0]
+    non_empty_rows = np.where(img.min(axis=1)<mean)[0]
+    bb = (min(non_empty_rows)-4, max(non_empty_rows)+4, min(non_empty_columns)+4, max(non_empty_columns)+4)
+    img = cv.bitwise_not(img)
+    img = img[bb[0]:bb[1], bb[2]:bb[3]] 
+    img = cv.resize(img, (28, 28))
+    
     return img
 
 def overlay(img_out, img_solved, biggest, w, h):
