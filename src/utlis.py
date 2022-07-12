@@ -7,7 +7,7 @@ import cv2 as cv
 import images as im
 from scipy import ndimage
 
-model = load_model('models/model-10-0.99.h5')	
+model = load_model('models/model-08-0.99.h5')	
 
 predictions = []
 
@@ -51,13 +51,6 @@ def shift_according_to_center_of_mass(img):
     img = cv.bitwise_not(img)
     return img
 
-
-def load_image(img):
-    # prepare pixel data
-    img = img.astype('float32')
-    img = img / 255.0
-    return img
-
 # load an image and predict the class
 def predict(boxes):
     # load model
@@ -65,17 +58,16 @@ def predict(boxes):
     #give prediction for evry square
     for img in boxes:
         pre = im.preprocess_box(img)
-        pre = im.prepare_box(pre)
+        #pre = im.prepare_box(pre)
         #pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         x+=1
         cv.imwrite(name, pre)
-        pre = cv.resize(pre,(28,28))
-
         if pre.sum() >= 28**2*255 - 28 * 1 * 255:
             predictions.append(0)
             continue    # Move on if we have a white cell
 
+        pre = cv.resize(pre, (28,28))
         center_width = pre.shape[1] // 2
         center_height = pre.shape[0] // 2
         x_start = center_height // 2
@@ -94,7 +86,7 @@ def predict(boxes):
         digit = argmax(predict)
         #get the probability value
         probability_value = amax(predict)
-        print(f"[{x}] pred: {digit+1}, conf: {'%.2f'%round(probability_value, 2)} %")
+        print(f"[{x}] pred: {digit}, conf: {'%.2f'%round(probability_value, 2)} %")
         predictions.append(digit)
 
     return np.asarray(predictions)

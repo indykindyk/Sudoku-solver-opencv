@@ -85,21 +85,47 @@ def cut_sudoku(input_img, points):
     
 def preprocess_box(box):
     gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
-    blur = cv.GaussianBlur(gray,(3,3),0)
-    th3 = cv.adaptiveThreshold(blur,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv.THRESH_BINARY,11,2)
+    blur = cv.GaussianBlur(gray,(9,9),0)
+    th3 = cv.adaptiveThreshold(blur,255,cv.ADAPTIVE_THRESH_MEAN_C,\
+            cv.THRESH_BINARY,7,2)
     return th3
 
 
 def prepare_box(img):
     img = np.array(img)
-    img = img[20:102, 20:102]
+    img = img[5:]
+    img = img[:-5]
+    img = np.delete(img, range(0,5), 1)
+    img = np.delete(img, range(-5, 0), 1)
+
+    # Top
+    while img[0].mean() <= 230:
+        img = img[1:]
+
+    # Down
+    while img[-1].mean() <= 230:
+        img = img[:-1]
+
+    #Left
+    while img[:,0].mean() <= 230:
+        img = np.delete(img, 0, 1)
+
+    #Right
+    while img[:, -1].mean() <= 230:
+        img = np.delete(img, -1, 1)
+
     mean = img.mean()
+    img = img[5:]
+    img = img[:-5]
+    img = np.delete(img, range(0,5), 1)
+    img = np.delete(img, range(-5, 0), 1)
+
     if mean > 250:
-        return img
+        return cv.resize(img, (28, 28))
+
     non_empty_columns = np.where(img.min(axis=1)<mean)[0]
     non_empty_rows = np.where(img.min(axis=1)<mean)[0]
-    bb = (min(non_empty_rows)-4, max(non_empty_rows)+4, min(non_empty_columns)+4, max(non_empty_columns)+4)
+    bb = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
     img = cv.bitwise_not(img)
     img = img[bb[0]:bb[1], bb[2]:bb[3]] 
     img = cv.resize(img, (28, 28))
@@ -216,6 +242,6 @@ def recognize_and_solve_sudoku(input_sudoku):
 
     prediction_img, predictions, posarr = display_predictions(boxes)
 
-
+    cv.imwrite("Preds.jpg", prediction_img)
 
     return prediction_img
