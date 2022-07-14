@@ -115,19 +115,37 @@ def prepare_box(img):
         img = np.delete(img, -1, 1)
 
     mean = img.mean()
-    img = img[5:]
-    img = img[:-5]
-    img = np.delete(img, range(0,5), 1)
-    img = np.delete(img, range(-5, 0), 1)
 
     if mean > 250:
         return cv.resize(img, (28, 28))
 
-    non_empty_columns = np.where(img.min(axis=1)<mean)[0]
-    non_empty_rows = np.where(img.min(axis=1)<mean)[0]
-    bb = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
+    cnts3 = img.copy()
+    contours2, hierarchy2 = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+    all_areas= []
+
+    contours2 = sorted(contours2, key=cv.contourArea, reverse=True)
+    contours2 = contours2[1:]
+
+    for cnt in contours2:
+        area= cv.contourArea(cnt)
+        all_areas.append(area)
+    
+    avg_cnt = sum(all_areas)/len(all_areas)
+
+    for cnt in contours2:
+        area = cv.contourArea(cnt)
+        if area < avg_cnt:
+            cv.drawContours(cnts3, [cnt], -1, (255,255,255), -1)
+
+    cnts3 = cnts3[5:]
+    cnts3 = cnts3[:-5]
+    cnts3 = np.delete(cnts3, range(0,5), 1)
+    cnts3 = np.delete(cnts3, range(-5, 0), 1)
+    img = cnts3
+
+    img = shift_according_to_center_of_mass(img)
     img = cv.bitwise_not(img)
-    img = img[bb[0]:bb[1], bb[2]:bb[3]] 
     img = cv.resize(img, (28, 28))
     
     return img

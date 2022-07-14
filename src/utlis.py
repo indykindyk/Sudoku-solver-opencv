@@ -58,10 +58,9 @@ def predict(boxes):
     #give prediction for evry square
     for img in boxes:
         pre = im.preprocess_box(img)
-        #pre = im.prepare_box(pre)
+        pre = im.prepare_box(pre)
         #pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
-        x+=1
         cv.imwrite(name, pre)
         if pre.sum() >= 28**2*255 - 28 * 1 * 255:
             predictions.append(0)
@@ -87,6 +86,7 @@ def predict(boxes):
         #get the probability value
         probability_value = amax(predict)
         print(f"[{x}] pred: {digit}, conf: {'%.2f'%round(probability_value, 2)} %")
+        x+=1
         predictions.append(digit)
 
     return np.asarray(predictions)
