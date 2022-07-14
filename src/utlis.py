@@ -5,7 +5,7 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import cv2 as cv
 import images as im
-from scipy import ndimage
+from scipy import ndimage as ndi
 
 model = load_model('models/model-08-0.99.h5')	
 
@@ -25,30 +25,14 @@ def split_photo(img):
     except TypeError:
         pass
 
-def get_best_shift(img):
-    cy,cx = ndimage.measurements.center_of_mass(img)
-
+def center_of_mass(img):
+    cy, cx = ndi.center_of_mass(img)
     rows,cols = img.shape
-    shiftx = np.round(cols/2.0-cx).astype(int)
-    shifty = np.round(rows/2.0-cy).astype(int)
-
-    return shiftx,shifty
-
-def shift(img,sx,sy):
-    rows,cols = img.shape
+    sx = np.round(cols/2.0-cx).astype(int)
+    sy = np.round(rows/2.0-cy).astype(int)
     M = np.float32([[1,0,sx],[0,1,sy]])
     shifted = cv.warpAffine(img,M,(cols,rows))
-    return shifted
-
-def shift_according_to_center_of_mass(img):
-    img = cv.bitwise_not(img)
-
-    # Centralize the image according to center of mass
-    shiftx,shifty = get_best_shift(img)
-    shifted = shift(img,shiftx,shifty)
-    img = shifted
-
-    img = cv.bitwise_not(img)
+    img = img[int(cy)-40:int(cy)+40, int(cx)-40:int(cx)+40  ]
     return img
 
 # load an image and predict the class
@@ -59,14 +43,12 @@ def predict(boxes):
     for img in boxes:
         pre = im.preprocess_box(img)
         pre = im.prepare_box(pre)
-        #pre = im.largest_connected_component(pre)
         name = f"box{x}.png"
         cv.imwrite(name, pre)
         if pre.sum() >= 28**2*255 - 28 * 1 * 255:
             predictions.append(0)
             continue    # Move on if we have a white cell
 
-        pre = cv.resize(pre, (28,28))
         center_width = pre.shape[1] // 2
         center_height = pre.shape[0] // 2
         x_start = center_height // 2

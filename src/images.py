@@ -144,7 +144,7 @@ def prepare_box(img):
     cnts3 = np.delete(cnts3, range(-5, 0), 1)
     img = cnts3
 
-    img = shift_according_to_center_of_mass(img)
+    img = center_of_mass(img)
     img = cv.bitwise_not(img)
     img = cv.resize(img, (28, 28))
     
