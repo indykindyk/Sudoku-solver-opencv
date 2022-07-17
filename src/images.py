@@ -5,7 +5,6 @@ import math
 from utlis import *
 import sudoku
 
-
 def preprocess(img):
     """
     This function preprocess the image.
@@ -101,9 +100,26 @@ def preprocess_box(box):
     )
     return th3
 
+def center(img):
+    img = np.array(img)
+    mean = img.mean()
+    non_empty_columns = np.where(img.min(axis=0)<mean)[0]
+    non_empty_rows = np.where(img.min(axis=1)<mean)[0]
+    box_w = max(non_empty_rows)+5 - min(non_empty_rows)-5
+    box_h = max(non_empty_columns) - min(non_empty_rows)
+    center = (min(non_empty_rows)+int(box_w/2), min(non_empty_columns)+int(box_h/2))    
+    print(center)
+    bb = (center[0]-25, center[0]+25, center[1]-25, center[1]+25)
+
+    if center[1]-25 < 0 :
+        bb = (0, center[0]+center[1], 0, center[1]+20)
+    return bb
+
 
 def prepare_box(img):
     img = np.array(img)
+    kernel = np.ones((2,2), np.uint8)
+    img = cv.erode(img, kernel, iterations=1)
     img = img[5:]
     img = img[:-5]
     img = np.delete(img, range(0, 5), 1)
@@ -125,6 +141,44 @@ def prepare_box(img):
     while img[:, -1].mean() <= 230:
         img = np.delete(img, -1, 1)
 
+    # Top
+    while img[0].mean() <= 230:
+        img = img[1:]
+
+    # Down
+    while img[-1].mean() <= 230:
+        img = img[:-1]
+
+    #Left
+    while img[:,0].mean() <= 230:
+        img = np.delete(img, 0, 1)
+
+    #Right
+    while img[:, -1].mean() <= 230:
+        img = np.delete(img, -1, 1)
+
+    
+    img = img[5:]
+    img = img[:-5]
+    img = np.delete(img, range(0,5), 1)
+    img = np.delete(img, range(-5, 0), 1)
+
+    # Top
+    while img[0].mean() <= 230:
+        img = img[1:]
+
+    # Down
+    while img[-1].mean() <= 230:
+        img = img[:-1]
+
+    #Left
+    while img[:,0].mean() <= 230:
+        img = np.delete(img, 0, 1)
+
+    #Right
+    while img[:, -1].mean() <= 230:
+        img = np.delete(img, -1, 1)
+
     mean = img.mean()
 
     if mean > 250:
@@ -143,7 +197,11 @@ def prepare_box(img):
         all_areas.append(area)
 
     if len(all_areas) == 0:
-        return np.zeros((28, 28))
+        bb = center(img)
+        img = img[bb[0]:bb[1], bb[2]:bb[3]]
+        img = cv.bitwise_not(img)
+        img = cv.resize(img, (28, 28))
+        return img
 
     avg_cnt = sum(all_areas) / len(all_areas)
 
@@ -158,7 +216,8 @@ def prepare_box(img):
     cnts3 = np.delete(cnts3, range(-5, 0), 1)
     img = cnts3
 
-    img = center_of_mass(img)
+    bb = center(img)
+    img = img[bb[0]:bb[1], bb[2]:bb[3]]
     img = cv.bitwise_not(img)
     img = cv.resize(img, (28, 28))
 
@@ -207,6 +266,9 @@ def largest_connected_component(image):
 
 
 def recognize_and_solve_sudoku(input_sudoku):
+    global solved_board 
+    global posarr 
+
     eps_angle = 20
     # preprocess current camera frame
     img_preprocessed = preprocess(input_sudoku)
@@ -223,7 +285,7 @@ def recognize_and_solve_sudoku(input_sudoku):
     # Find top left (sum of coordinates is the smallest)
     sum = 10000
     index = 0
-    
+
     for i in range(4):
         if corners[i][0] + corners[i][1] < sum:
             sum = corners[i][0] + corners[i][1]
@@ -283,27 +345,21 @@ def recognize_and_solve_sudoku(input_sudoku):
 
     cv.imwrite("Preds.jpg", prediction_img)
 
-    return prediction_img
+    sudoku.solve(predictions.reshape(9,9))
 
-    # print("siem")
+    solved_board = np.reshape(predictions, (81))*posarr
 
-    # sudoku.solve(predictions.reshape(9,9))
+    if solved_board.sum() == 0:
+        return input_sudoku
 
-    # print("Elo")
+    solved_img, predictions, _ = display_predictions(solved_board, solved=True)
 
-    # solved_board = np.reshape(predictions, (81))*posarr
+    (h, w) = input_sudoku.shape[:2]
 
-    # print(solved_board)
+    simg = im.overlay(input_sudoku, solved_img, aprx, w, h)
 
-    # if solved_board.sum() == 0:
-    # return input_sudoku
+    cv.imwrite("Solved.jpg", simg)
 
-    # solved_img, predictions, _ = display_predictions(solved_board, solved=True)
+    cv.imwrite("Preds.jpg",prediction_img)
 
-    # (h, w) = input_sudoku.shape[:2]
-
-    # simg = im.overlay(input_sudoku, solved_img, aprx, w, h)
-
-    # cv.imwrite("Preds.jpg",prediction_img)
-
-    # return simg
+    return simg

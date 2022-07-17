@@ -13,22 +13,13 @@ predictions = []
 
 def split_photo(img):
     #split photo into 81 squares
-    try:
-        if len(img) > 1:
-            vsplit = np.vsplit(img, 9)
-            boxes = []
-            for vs in vsplit:
-                hsplit = np.hsplit(vs, 9)
-                for hs in hsplit:
-                    boxes.append(hs)
-            return boxes
-    except TypeError:
-        pass
-
-def center_of_mass(img):
-    cy, cx = ndi.center_of_mass(img)
-    img = img[int(cy)-40:int(cy)+40, int(cx)-40:int(cx)+40  ]
-    return img
+    vsplit = np.vsplit(img, 9)
+    boxes = []
+    for vs in vsplit:
+        hsplit = np.hsplit(vs, 9)
+        for hs in hsplit:
+            boxes.append(hs)
+    return boxes
 
 # load an image and predict the class
 def predict(boxes):
@@ -38,9 +29,14 @@ def predict(boxes):
     predictions = []
     for img in boxes:
         pre = im.preprocess_box(img)
-        pre = im.prepare_box(pre)
-        name = f"box{x}.png"
+        name = f"box_pre{x}.png"
         cv.imwrite(name, pre)
+        name = f"box{x}.png"
+        pre = im.prepare_box(pre)
+        cv.imwrite(name, pre)
+
+        x+=1
+
         if pre.sum() >= 28**2*255 - 28 * 1 * 255:
             predictions.append(0)
             continue    # Move on if we have a white cell
@@ -53,10 +49,6 @@ def predict(boxes):
         y_end = center_width // 2 + center_width
         center_region = pre[x_start:x_end, y_start:y_end]
 
-        if center_region.sum() >= center_width * center_height * 255 - 255:
-            predictions.append(0)
-            continue
-
         box =  np.expand_dims(pre, axis=0)
         box = box/255.
         predict = model.predict(box)
@@ -64,7 +56,6 @@ def predict(boxes):
         #get the probability value
         probability_value = amax(predict)
         print(f"[{x}] pred: {digit}, conf: {'%.2f'%round(probability_value, 2)} %")
-        x+=1
         predictions.append(digit)
 
     return np.array(predictions)
