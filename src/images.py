@@ -100,21 +100,14 @@ def preprocess_box(box):
     )
     return th3
 
-def center(img):
+def cb(img):
     img = np.array(img)
     mean = img.mean()
     non_empty_columns = np.where(img.min(axis=0)<mean)[0]
     non_empty_rows = np.where(img.min(axis=1)<mean)[0]
-    box_w = max(non_empty_rows)+5 - min(non_empty_rows)-5
-    box_h = max(non_empty_columns) - min(non_empty_rows)
-    center = (min(non_empty_rows)+int(box_w/2), min(non_empty_columns)+int(box_h/2))    
-    print(center)
-    bb = (center[0]-25, center[0]+25, center[1]-25, center[1]+25)
-
-    if center[1]-25 < 0 :
-        bb = (0, center[0]+center[1], 0, center[1]+20)
+    boundingBox = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
+    bb = boundingBox
     return bb
-
 
 def prepare_box(img):
     img = np.array(img)
@@ -197,7 +190,7 @@ def prepare_box(img):
         all_areas.append(area)
 
     if len(all_areas) == 0:
-        bb = center(img)
+        bb = cb(img)
         img = img[bb[0]:bb[1], bb[2]:bb[3]]
         img = cv.bitwise_not(img)
         img = cv.resize(img, (28, 28))
@@ -216,7 +209,7 @@ def prepare_box(img):
     cnts3 = np.delete(cnts3, range(-5, 0), 1)
     img = cnts3
 
-    bb = center(img)
+    bb = cb(img)
     img = img[bb[0]:bb[1], bb[2]:bb[3]]
     img = cv.bitwise_not(img)
     img = cv.resize(img, (28, 28))
