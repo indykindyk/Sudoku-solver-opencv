@@ -20,6 +20,11 @@ def cb(img):
     bb = boundingBox
     return bb
 
+def preprocess_box(box):
+    th3 = cv.adaptiveThreshold(
+        box, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 7, 2
+    )
+    return th3
 
 def draw_char(font_type, number, path):
     background_color = (255)
@@ -32,6 +37,7 @@ def draw_char(font_type, number, path):
     blurred = image.filter(filter=ImageFilter.GaussianBlur(1))
     bb = cb(blurred)
     blurred = np.array(blurred)[bb[0]:bb[1], bb[2]:bb[3]]
+    blurred = cv.bitwise_not(blurred)
     blurred = cv.resize(blurred,(28,28))
     cv.imwrite(f"{path}/{count}.jpg", blurred)
 
@@ -45,7 +51,63 @@ def supportsDigits(fontPath):
                 return False
     return True
 
-font_blacklist = ["/usr/share/fonts/truetype/lyx/esint10.ttf"]
+font_blacklist = ['#',
+    "italic",
+    "Italic",
+    "VAZTEK",
+    "antique",
+    "aztek",
+    "RosewoodStd-Regular",
+    "ShishoniBrush",
+    "VAVOI",
+    "seguili",
+    'UVNThayGiaoNang_I',
+    'VAVOBI',
+    'VNI-Nhatban',
+    'VNI-Script',
+    'VNI-Trung Kien',
+    'segoeuii.ttf',
+    'VNI-Viettay',
+    'Brush',
+    'VREDROCK',
+    'UVNHaiBaTrung',
+    'UVNButLong',
+    'AmaticSC',
+    'UVNMucCham',
+    'UVNThayGiao_BI.TTF',
+    'VKUN',
+    'segoeuiz.ttf',
+    'seguibli.ttf',
+    'MyriadPro',
+    'Lobster-Regular',
+    'Bangers-Regular',
+    'VNI',
+    'VUSALI.TTF',
+    'VPEINOT.TTF',
+    'UVNSangSong_R',
+    'VDURHAM.TTF',
+    'Vnhltfap.ttf',
+    'UVNVienDu',
+    'UVNBucThu',
+    'UVNSangSong',
+    'VSCRIPT',
+    'VAUCHON',
+    'Vnthfap3',
+    'VCAMPAI',
+    'BungeeOutline',
+    'VBROADW',
+    'BungeeHairline-Regular',
+    'UVNMinhMap',
+    'scripti',
+    'UVN',
+    'brushsbi',
+    'Montserrat',
+    'VHELVCI.TTF',
+    'VFREE',
+    'BRUSH',
+    'seguis',
+    'VSLOGAN.TTF',
+    'esint10.ttf']
 
 def check_blacklist(font):
     for bl in font_blacklist:
