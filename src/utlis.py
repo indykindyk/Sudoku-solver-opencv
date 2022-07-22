@@ -7,7 +7,8 @@ import cv2 as cv
 import images as im
 from scipy import ndimage as ndi
 
-model = load_model('models/model-08-0.99.h5')	
+
+model = load_model('models/model-04-1.00.h5')	
 
 predictions = []
 
@@ -29,12 +30,9 @@ def predict(boxes):
     predictions = []
     for img in boxes:
         pre = im.preprocess_box(img)
-        name = f"box_pre{x}.png"
-        cv.imwrite(name, pre)
         name = f"box{x}.png"
         pre = im.prepare_box(pre)
-        cv.imwrite(name, pre)
-
+        
         x+=1
 
         if pre.sum() >= 28**2*255 - 28 * 1 * 255:
@@ -53,9 +51,8 @@ def predict(boxes):
         box = box/255.
         predict = model.predict(box)
         digit = argmax(predict)
-        #get the probability value
-        probability_value = amax(predict)
-        print(f"[{x}] pred: {digit}, conf: {'%.2f'%round(probability_value, 2)} %")
+        digit += 1
+        print(f"[{x}] pred: {digit}")
         predictions.append(digit)
 
     return np.array(predictions)

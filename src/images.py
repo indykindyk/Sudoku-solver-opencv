@@ -212,6 +212,7 @@ def prepare_box(img):
     bb = cb(img)
     img = img[bb[0]:bb[1], bb[2]:bb[3]]
     img = cv.bitwise_not(img)
+    img = cv.GaussianBlur(img, (3, 3), 0)
     img = cv.resize(img, (28, 28))
 
     return img
@@ -259,9 +260,6 @@ def largest_connected_component(image):
 
 
 def recognize_and_solve_sudoku(input_sudoku):
-    global solved_board 
-    global posarr 
-
     eps_angle = 20
     # preprocess current camera frame
     img_preprocessed = preprocess(input_sudoku)
@@ -329,6 +327,7 @@ def recognize_and_solve_sudoku(input_sudoku):
     if side_lengths_are_too_different(A, B, C, D, eps_scale):
         return input_sudoku
 
+
     shrinked_board = cut_sudoku(input_sudoku, rect)
 
     shrinked_board = cv.flip(shrinked_board, 1)
@@ -345,8 +344,9 @@ def recognize_and_solve_sudoku(input_sudoku):
     if solved_board.sum() == 0:
         return input_sudoku
 
-    solved_img, predictions, _ = display_predictions(solved_board, solved=True)
 
+    solved_img, predictions, _ = display_predictions(solved_board, solved=True)
+    
     (h, w) = input_sudoku.shape[:2]
 
     simg = im.overlay(input_sudoku, solved_img, aprx, w, h)
