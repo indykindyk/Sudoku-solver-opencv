@@ -1,9 +1,23 @@
 import cv2 as cv
 import numpy as np
-import utlis
 import math
 from utlis import *
 import sudoku
+
+
+def split_photo(img):
+    """
+    split sudoku board image into 81
+    squres
+    """
+    vsplit = np.vsplit(img, 9)
+    boxes = []
+    for vs in vsplit:
+        hsplit = np.hsplit(vs, 9)
+        for hs in hsplit:
+            boxes.append(hs)
+    return boxes
+
 
 def preprocess(img):
     """
@@ -46,8 +60,10 @@ def side_lengths_are_too_different(A, B, C, D, eps_scale):
 
 
 def find_contours(img):
+    """
+    find contours in image
+    """
     contours, _ = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    # print(contours)
     return contours
 
 
@@ -55,15 +71,10 @@ def approx_90_degrees(angle, epsilon):
     return abs(angle - 90) < epsilon
 
 
-def draw_lines(img, output):
-    lines = cv.HoughLinesP(img, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=12)
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        cv.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    return output
-
-
 def biggest_contour(contours):
+    """
+    Find biggest contour on image
+    """
     cnt = contours[0]
     max_area = cv.contourArea(cnt)
     for cont in contours:
@@ -75,6 +86,10 @@ def biggest_contour(contours):
 
 
 def approx(img):
+    """
+    Find 4 corners of sudoku board
+    from image
+    """
     cnt = biggest_contour(img)
     epsilon = 0.01 * cv.arcLength(cnt, True)
     approx = cv.approxPolyDP(cnt, epsilon, True)
@@ -84,6 +99,10 @@ def approx(img):
 
 
 def cut_sudoku(input_img, points):
+    """
+    Get sudoku board from
+    original image
+    """
     width, height = 1152, 1152
     src = np.float32([*points])
     pts2 = np.float32([[height, 0], [0, 0], [0, width], [height, width]])
@@ -93,6 +112,10 @@ def cut_sudoku(input_img, points):
 
 
 def preprocess_box(box):
+    """
+    perform some required operation
+    on sudoku box before OCR
+    """
     gray = cv.cvtColor(box, cv.COLOR_RGB2GRAY)
     blur = cv.GaussianBlur(gray, (9, 9), 0)
     th3 = cv.adaptiveThreshold(
@@ -100,19 +123,32 @@ def preprocess_box(box):
     )
     return th3
 
-def cb(img):
+
+def boundings(img):
     img = np.array(img)
     mean = img.mean()
-    non_empty_columns = np.where(img.min(axis=0)<mean)[0]
-    non_empty_rows = np.where(img.min(axis=1)<mean)[0]
-    boundingBox = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
+    non_empty_columns = np.where(img.min(axis=0) < mean)[0]
+    non_empty_rows = np.where(img.min(axis=1) < mean)[0]
+    boundingBox = (
+        min(non_empty_rows),
+        max(non_empty_rows),
+        min(non_empty_columns),
+        max(non_empty_columns),
+    )
     bb = boundingBox
     return bb
 
+
 def prepare_box(img):
+    """
+    Cleans sudoku boxes from noise
+    before recognition
+    """
     img = np.array(img)
-    kernel = np.ones((2,2), np.uint8)
+    # erode image to connect charagters
+    kernel = np.ones((2, 2), np.uint8)
     img = cv.erode(img, kernel, iterations=1)
+    # remove a few pixels from evry side of image
     img = img[5:]
     img = img[:-5]
     img = np.delete(img, range(0, 5), 1)
@@ -142,18 +178,17 @@ def prepare_box(img):
     while img[-1].mean() <= 230:
         img = img[:-1]
 
-    #Left
-    while img[:,0].mean() <= 230:
+    # Left
+    while img[:, 0].mean() <= 230:
         img = np.delete(img, 0, 1)
 
-    #Right
+    # Right
     while img[:, -1].mean() <= 230:
         img = np.delete(img, -1, 1)
 
-    
     img = img[5:]
     img = img[:-5]
-    img = np.delete(img, range(0,5), 1)
+    img = np.delete(img, range(0, 5), 1)
     img = np.delete(img, range(-5, 0), 1)
 
     # Top
@@ -164,11 +199,11 @@ def prepare_box(img):
     while img[-1].mean() <= 230:
         img = img[:-1]
 
-    #Left
-    while img[:,0].mean() <= 230:
+    # Left
+    while img[:, 0].mean() <= 230:
         img = np.delete(img, 0, 1)
 
-    #Right
+    # Right
     while img[:, -1].mean() <= 230:
         img = np.delete(img, -1, 1)
 
@@ -177,12 +212,14 @@ def prepare_box(img):
     if mean > 250:
         return cv.resize(img, (28, 28))
 
+    # find contours in image
     cnts3 = img.copy()
     contours2, hierarchy2 = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
     all_areas = []
 
     contours2 = sorted(contours2, key=cv.contourArea, reverse=True)
+    # skip first contour - it is image boundings
     contours2 = contours2[1:]
 
     for cnt in contours2:
@@ -190,16 +227,19 @@ def prepare_box(img):
         all_areas.append(area)
 
     if len(all_areas) == 0:
-        bb = cb(img)
-        img = img[bb[0]:bb[1], bb[2]:bb[3]]
+        bb = boundings(img)
+        img = img[bb[0] : bb[1], bb[2] : bb[3]]
         img = cv.bitwise_not(img)
         img = cv.resize(img, (28, 28))
         return img
 
+    # calculate average contour
     avg_cnt = sum(all_areas) / len(all_areas)
 
     for cnt in contours2:
         area = cv.contourArea(cnt)
+        # if area of contour is smaller remove it
+        # becouse it is probably noise
         if area < avg_cnt:
             cv.drawContours(cnts3, [cnt], -1, (255, 255, 255), -1)
 
@@ -209,8 +249,8 @@ def prepare_box(img):
     cnts3 = np.delete(cnts3, range(-5, 0), 1)
     img = cnts3
 
-    bb = cb(img)
-    img = img[bb[0]:bb[1], bb[2]:bb[3]]
+    bb = boundings(img)
+    img = img[bb[0] : bb[1], bb[2] : bb[3]]
     img = cv.bitwise_not(img)
     img = cv.GaussianBlur(img, (3, 3), 0)
     img = cv.resize(img, (28, 28))
@@ -219,47 +259,23 @@ def prepare_box(img):
 
 
 def overlay(img_out, img_solved, biggest, w, h):
+    """
+    Overlays solved sudoku to original image
+    """
     img_solved = img_solved.astype("uint8")
     pts2 = np.float32(biggest)
     pts1 = np.float32([[1152, 0], [0, 0], [0, 1152], [1152, 1152]])
     matrix = cv.getPerspectiveTransform(pts1, pts2)
     imgInvWarpColored = img_solved.copy()
     imgInvWarpColored = cv.warpPerspective(img_solved, matrix, (w, h))
-    print(imgInvWarpColored.shape)
-    print(img_out.shape)
     inv_perspective = cv.addWeighted(imgInvWarpColored, 1, img_out, 0.5, 1)
     return inv_perspective
 
 
-def largest_connected_component(image):
-
-    image = image.astype("uint8")
-    nb_components, output, stats, centroids = cv.connectedComponentsWithStats(
-        image, connectivity=8
-    )
-    sizes = stats[:, -1]
-
-    if len(sizes) <= 1:
-        blank_image = np.zeros(image.shape)
-        blank_image.fill(255)
-        return blank_image
-
-    max_label = 1
-    # Start from component 1 (not 0) because we want to leave out the background
-    max_size = sizes[1]
-
-    for i in range(1, nb_components):
-        if sizes[i] > max_size:
-            max_label = i
-            max_size = sizes[i]
-
-    img2 = np.zeros(output.shape)
-    img2.fill(0)
-    img2[output == max_label] = 255
-    return img2
-
-
 def recognize_and_solve_sudoku(input_sudoku):
+    """
+    Main function
+    """
     eps_angle = 20
     # preprocess current camera frame
     img_preprocessed = preprocess(input_sudoku)
@@ -327,7 +343,6 @@ def recognize_and_solve_sudoku(input_sudoku):
     if side_lengths_are_too_different(A, B, C, D, eps_scale):
         return input_sudoku
 
-
     shrinked_board = cut_sudoku(input_sudoku, rect)
 
     shrinked_board = cv.flip(shrinked_board, 1)
@@ -335,24 +350,17 @@ def recognize_and_solve_sudoku(input_sudoku):
     boxes = split_photo(shrinked_board)
     prediction_img, predictions, posarr = display_predictions(boxes)
 
-    cv.imwrite("Preds.jpg", prediction_img)
+    sudoku.solve(predictions.reshape(9, 9))
 
-    sudoku.solve(predictions.reshape(9,9))
-
-    solved_board = np.reshape(predictions, (81))*posarr
+    solved_board = np.reshape(predictions, (81)) * posarr
 
     if solved_board.sum() == 0:
         return input_sudoku
 
-
     solved_img, predictions, _ = display_predictions(solved_board, solved=True)
-    
+
     (h, w) = input_sudoku.shape[:2]
 
     simg = im.overlay(input_sudoku, solved_img, aprx, w, h)
-
-    cv.imwrite("Solved.jpg", simg)
-
-    cv.imwrite("Preds.jpg",prediction_img)
 
     return simg

@@ -6,46 +6,34 @@ from tensorflow.keras.models import load_model
 import cv2 as cv
 import images as im
 from scipy import ndimage as ndi
-import multiprocessing
-
 
 model = load_model('models/model-05-1.00.h5')	
 
-predictions = []
+def predict(boxes):
+    """
+    makes prediction on evry box in sudoku
+    """
+    x = 0
+    predictions = []
+    for img in boxes:
+        pre = im.preprocess_box(img)
+        pre = im.prepare_box(pre)
+        x+=1
+        if pre.sum() >= 28**2*255 - 28 * 1 * 255:
+            predictions.append(0)
+            continue    # Move on if we have a white cell
 
-def split_photo(img):
-    #split photo into 81 squares
-    vsplit = np.vsplit(img, 9)
-    boxes = []
-    for vs in vsplit:
-        hsplit = np.hsplit(vs, 9)
-        for hs in hsplit:
-            boxes.append(hs)
-    return boxes
+        box =  np.expand_dims(pre, axis=0)
+        box = box/255.
+        predict = model.predict(box)
+        digit = argmax(predict)
+        digit += 1
+        print(f"[{x}] pred: {digit}")
 
-def pref_in_parrel(img):
-    pre = im.preprocess_box(img)
-    pre = im.prepare_box(pre)
-
-    if pre.sum() >= 28**2*255 - 28 * 1 * 255:
-        return 0
-
-    box =  np.expand_dims(pre, axis=0)
-    box = box/255.
-    predict = model.predict(box)
-    digit = argmax(predict)
-    digit += 1
-    return digit
-
-# load an image and predict the class
-def predict(boxes): 
-    #make prediction for evry square
-    print(boxes)
-    p = multiprocessing.Pool(4)
-    predictions = p.map(pref_in_parrel, boxes)
-    print(predictions)
+        predictions.append(digit)
+    
     return np.array(predictions)
-
+        
 def display_predictions(boxes, solved=False):
     predictions = []
     global posArray
