@@ -2,4 +2,4 @@
 
 Solves sudoku from webcam 
 
-![Example frame](https://im.ge/i/FDpCoq)
+![Example frame](https://i.im.ge/2022/07/25/FDpCoq.jpg)
